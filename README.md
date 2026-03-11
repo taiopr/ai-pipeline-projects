@@ -28,3 +28,15 @@ A Python script that calls three external APIs and combines their outputs into a
 - How to authenticate with API keys via headers
 - How to navigate nested JSON responses
 - How to chain API outputs as context for subsequent calls
+
+## joke_expander.py
+
+Takes a user-input topic, finds a relevant joke using JokeAPI,
+then uses OpenAI GPT-4o-mini to expand it into a longer,
+funnier version.
+
+### What I learned
+- How to handle API-level errors (error field in JSON response)
+- How to use the temperature parameter in LLM calls
+- How to use system prompts to shape model behavior
+- Full Git branch workflow: create, commit, merge, delete
