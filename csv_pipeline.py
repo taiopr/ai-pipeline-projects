@@ -1,3 +1,6 @@
+from logger import log_api_call, print_log_summary
+from api_utils import call_with_retry
+
 import os
 import csv
 import time
@@ -47,6 +50,9 @@ def get_summary(topic: str, category: str) -> str:
         "Content-Type": "application/json"
     }
 
+    # Assign prompt to a variable so it can be passed to log_api_call
+    prompt = f"Topic: {topic}\nCategory: {category}"
+
     body = {
         "model": "gpt-4o-mini",
         "messages": [
@@ -56,27 +62,58 @@ def get_summary(topic: str, category: str) -> str:
                     "You are a concise encyclopedia. "
                     "Write exactly 2 sentences about the given topic. "
                     "Be factual, specific, and informative. "
-                    "No fluff, no filler. "
+                    "No fluff, no filler."
                 )
             },
             {
                 "role": "user",
-                "content": f"Topic: {topic}\nCategory: {category}"
+                "content": prompt  # ← Use the variable here too
             }
         ],
         "max_tokens": 120,
-        "temperature": 0.3   # Low temperature = consistent, factual responses
+        "temperature": 0.3
     }
 
-    response = requests.post(
-        "https://api.openai.com/v1/chat/completions",
-        headers = headers,
-        json=body
-    )
+    def make_request():
+        response = requests.post(
+            "https://api.openai.com/v1/chat/completions",
+            headers=headers,
+            json=body
+        )
+        response.raise_for_status()
+        return response
 
-    response.raise_for_status()
-    data = response.json()
-    return data["choices"][0]["message"]["content"].strip()
+    start_time = time.time()
+
+    try:
+        response    = call_with_retry(make_request, max_retries=4, base_wait=1.0)
+        data        = response.json()
+        result_text = data["choices"][0]["message"]["content"].strip()
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        log_api_call(
+            model       = "gpt-4o-mini",
+            prompt      = prompt,
+            response    = result_text,
+            status      = "success",
+            duration_ms = duration_ms
+        )
+
+        return result_text
+
+    except Exception as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        log_api_call(
+            model       = "gpt-4o-mini",
+            prompt      = prompt,
+            response    = None,
+            status      = "failed",
+            duration_ms = duration_ms,
+            error       = str(e)
+        )
+
+        raise
 
 
 
@@ -103,7 +140,6 @@ def write_results(results: list, filepath: str) -> None:
 def run_pipeline(input_file: str, output_file: str) -> None:
     # Step 1 - Read Input
     topics = read_topics(input_file)
-    print(f"DEBUG — topics loaded: {topics}")  # Add this line
 
     if not topics:
         return   # Exit early if no topics loaded
@@ -157,6 +193,9 @@ def run_pipeline(input_file: str, output_file: str) -> None:
     print(f"  Successful: {successful}/{total}")
     if failed > 0:
         print(f"  Failed:     {failed}/{total} - check output CSV for details")
+
+    # Show API call log summary
+    print_log_summary()
 
 
 # ─────────────────────────────────────────────────────
