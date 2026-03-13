@@ -258,6 +258,37 @@ print_log_summary()
 - Why loggers are built as separate modules — so any script can import
   them without duplicating code
 
+
+## three_step_pipeline.py
+
+An interactive 3-step pipeline that processes user input through an LLM
+and saves formatted results to a JSON file.
+
+### The three steps
+
+1. Validate — cleans and validates user input before any API call is made
+2. Process — sends the topic to OpenAI with a format-specific system prompt
+3. Format and save — structures the result with metadata and appends to JSON
+
+### Formats available
+
+- summary    — 3-sentence factual summary
+- bullets    — 5 bullet points
+- eli5       — explain like I'm 5, with analogy
+- technical  — explanation for an experienced engineer
+
+### Output file — pipeline_results.json
+
+Every successful run appends one entry to pipeline_results.json:
+timestamp, topic, format, result text, word count, character count.
+
+### What I learned
+
+- How to design a pipeline architecture before writing code
+- Separation of concerns — each function has exactly one job
+- How format-specific system prompts change output without changing architecture
+- How validation at Step 1 prevents unnecessary API calls
+- How to append to a JSON array across multiple script runs
 ---
 
 ## Setup for all scripts
