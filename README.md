@@ -289,6 +289,34 @@ timestamp, topic, format, result text, word count, character count.
 - How format-specific system prompts change output without changing architecture
 - How validation at Step 1 prevents unnecessary API calls
 - How to append to a JSON array across multiple script runs
+
+
+## webhook_trigger.py
+ 
+Python script that sends test payloads to an n8n webhook.
+Used to trigger and test the n8n Webhook → LLM → Discord workflow.
+ 
+### What the n8n workflow does
+1. Receives a JSON payload via HTTP POST (Webhook node)
+2. Sends the topic to OpenAI GPT-4o-mini for a 2-sentence summary (OpenAI node)
+3. Posts the summary to a Discord channel (Discord node)
+ 
+### Usage
+```
+# Single test (first payload)
+python webhook_trigger.py
+ 
+# Run all 3 test payloads interactively
+python webhook_trigger.py all
+```
+ 
+### What I learned
+- n8n node structure: trigger → processing → output
+- Webhook triggers: test URL vs production URL
+- n8n expressions: {{ $json.field }} for data injection between nodes
+- How to inspect node output panels to find correct data paths
+- The visual pipeline equivalent of every Python pipeline pattern
+
 ---
 
 ## Setup for all scripts
